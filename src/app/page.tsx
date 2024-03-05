@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import Layout from './layout';
+import dynamic from 'next/dynamic';  // Додано dynamic для імпорту useEffect та useState
+const Layout = dynamic(() => import('./layout'));
 
 interface Post {
   userId: number;
@@ -9,41 +10,45 @@ interface Post {
   body: string;
 }
 
-const PostDetail: React.FC = () => {
-  const [post, setPost] = useState<Post>({ userId: 0, id: 0, title: '', body: '' });
+const Home: React.FC = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const { id } = router.query;
 
   useEffect(() => {
-    const fetchPost = async () => {
+    const fetchPosts = async () => {
       try {
-        if (id) {
-          const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
-          const data: Post = await response.json();
-          setPost(data);
-          setLoading(false);
-        }
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+        const data: Post[] = await response.json();
+        setPosts(data);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching post:', error);
+        console.error('Error fetching posts:', error);
       }
     };
 
-    fetchPost();
-  }, [id]);
+    fetchPosts();
+  }, []);
 
   return (
     <Layout>
+      <h2>Останні дописи</h2>
       {loading ? (
-        <p>Loading...</p>
+        <p>Завантаження...</p>
       ) : (
-        <div>
-          <h2>{post.title}</h2>
-          <p>{post.body}</p>
-        </div>
+        <ul>
+          {posts.map(post => (
+            <li key={post.id}>
+              <a onClick={() => router.push(`/posts/${post.id}`)} style={{ cursor: 'pointer' }}>
+                <h3>{post.title}</h3>
+                <p>{post.body.length > 100 ? `${post.body.slice(0, 100)}...` : post.body}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
       )}
     </Layout>
   );
 };
 
-export default PostDetail;
+export default Home;
