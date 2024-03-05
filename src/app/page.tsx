@@ -1,47 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Layout from './layout';
 
-const Home: React.FC = () => {
-  const [posts, setPosts] = useState([]);
+interface Post {
+  userId: number;
+  id: number;
+  title: string;
+  body: string;
+}
+
+const PostDetail: React.FC = () => {
+  const [post, setPost] = useState<Post>({ userId: 0, id: 0, title: '', body: '' });
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { id } = router.query;
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchPost = async () => {
       try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-        const data = await response.json();
-        setPosts(data);
-        setLoading(false);
+        if (id) {
+          const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+          const data: Post = await response.json();
+          setPost(data);
+          setLoading(false);
+        }
       } catch (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error fetching post:', error);
       }
     };
 
-    fetchPosts();
-  }, []);
+    fetchPost();
+  }, [id]);
 
   return (
     <Layout>
-      <h2>Recent Posts</h2>
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <ul>
-          {posts.map(post => (
-            <li key={post.id}>
-              <Link href={`/posts/${post.id}`}>
-                <a>
-                  <h3>{post.title}</h3>
-                  <p>{post.body.length > 100 ? `${post.body.slice(0, 100)}...` : post.body}</p>
-                </a>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div>
+          <h2>{post.title}</h2>
+          <p>{post.body}</p>
+        </div>
       )}
     </Layout>
   );
 };
 
-export default Home;
+export default PostDetail;
